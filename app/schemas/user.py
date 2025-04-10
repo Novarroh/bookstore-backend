@@ -39,3 +39,7 @@ class User(UserBase):
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+class RoleUpdate(BaseModel):
+    role: UserRole
+    admin_id: int

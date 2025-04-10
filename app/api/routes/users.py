@@ -3,8 +3,9 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.database import get_db
-from app.schemas.user import User, UserCreate, LoginRequest
+from app.schemas.user import User, UserCreate, LoginRequest, UserUpdate, RoleUpdate
 from app.crud import user as user_crud
+from app.models.user import UserRole
 
 router = APIRouter()
 
@@ -33,3 +34,20 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     users = user_crud.get_users(db, skip=skip, limit=limit)
     return users
 
+@router.put("/{user_id}/role", response_model=User)
+def update_user_role(user_id: int, role_update: RoleUpdate, db: Session = Depends(get_db)):
+    admin_id = role_update.admin_id
+    admin = user_crud.get_user(db, user_id=admin_id)
+    if admin is None or admin.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admin users can update user roles"
+    )
+    user_update = UserUpdate(role=role_update.role)
+    db_user = user_crud.update_user(db, user_id=user_id, user=user_update)
+    if db_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="User not found"
+        )
+    return db_user
