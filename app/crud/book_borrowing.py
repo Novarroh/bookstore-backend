@@ -58,6 +58,9 @@ def return_book(db: Session, borrowing_id: int) -> Optional[BookBorrowing]:
     if not db_borrowing:
         return None
     
+    if db_borrowing.is_returned:
+        return None
+    
     db_borrowing.is_returned = True
     db.add(db_borrowing)
     db.commit()

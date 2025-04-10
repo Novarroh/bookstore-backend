@@ -84,3 +84,21 @@ def read_user_borrowings(user_id: int, skip: int = 0, limit: int = 100, db: Sess
         )
     borrowings = borrowing_crud.get_user_borrowings(db, user_id=user_id, skip=skip, limit=limit)
     return borrowings
+
+@router.put("/{borrowing_id}/return")
+def return_borrowed_book(borrowing_id: int, db: Session = Depends(get_db)):
+    """
+    Mark a borrowed book as returned.
+    """
+    db_borrowing = borrowing_crud.return_book(db, borrowing_id=borrowing_id)
+    if db_borrowing is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Borrowing record not found"
+        )
+    # Increase the book quantity
+    book = book_crud.get_book(db, book_id=db_borrowing.book_id)
+    book.available_quantity = book.available_quantity + 1
+    db.add(book)
+    db.commit()
+    return {"message": "Book returned successfully"}
