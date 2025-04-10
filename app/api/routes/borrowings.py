@@ -36,6 +36,14 @@ def create_book_borrowing(borrowing: BookBorrowingCreate, db: Session = Depends(
             detail="Book not found"
         )
     
+    # Check if book is available (quantity > 0)
+    if book.available_quantity <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Book is not available for borrowing (quantity is 0)"
+        )
+    
+    
     # Verify the user exists
     user = user_crud.get_user(db, user_id=borrowing.user_id)
     if not user:
@@ -54,6 +62,13 @@ def create_book_borrowing(borrowing: BookBorrowingCreate, db: Session = Depends(
             )
     
     borrowing_crud.create_borrowing(db=db, borrowing=borrowing)
+
+    # Reduce the book quantity
+    book.available_quantity = book.available_quantity - 1
+    db.add(book)
+    db.commit()
+    db.refresh(book)
+
     return {"message": "Borrowing record created successfully"}
 
 @router.get("/user/{user_id}", response_model=List[BookBorrowingDetail])
