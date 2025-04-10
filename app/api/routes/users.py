@@ -27,3 +27,9 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             detail="Incorrect email or password"
         )
     return {"id": user.id,  "first_name": user.first_name, "last_name": user.last_name,"email": user.email, "role": user.role, "is_active": user.is_active}
+
+@router.get("/", response_model=List[User])
+def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    users = user_crud.get_users(db, skip=skip, limit=limit)
+    return users
+
