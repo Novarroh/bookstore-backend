@@ -16,7 +16,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     first_name = Column(String)
     last_name = Column(String)
-    password = Column(String)  # Note: In a real app, you should hash passwords
+    password = Column(String) 
     role = Column(String, default=UserRole.CUSTOMER)
     is_active = Column(Boolean, default=True)
     
