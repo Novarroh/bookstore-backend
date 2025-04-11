@@ -17,6 +17,9 @@ def get_user_borrowings(db: Session, user_id: int, skip: int = 0, limit: int = 1
 def get_book_borrowings(db: Session, book_id: int, skip: int = 0, limit: int = 100) -> List[BookBorrowing]:
     return db.query(BookBorrowing).filter(BookBorrowing.book_id == book_id).offset(skip).limit(limit).all()
 
+def get_user_book_borrowings(db: Session, book_id: int, user_id: int,skip: int = 0, limit: int = 100) -> List[BookBorrowing]:
+    return db.query(BookBorrowing).filter(BookBorrowing.book_id == book_id,BookBorrowing.user_id == user_id).offset(skip).limit(limit).all()
+
 def get_active_borrowings(db: Session, skip: int = 0, limit: int = 100) -> List[BookBorrowing]:
     return db.query(BookBorrowing).filter(BookBorrowing.is_returned == False).offset(skip).limit(limit).all()
 

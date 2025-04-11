@@ -53,7 +53,7 @@ def create_book_borrowing(borrowing: BookBorrowingCreate, db: Session = Depends(
         )
     
     # Check if the book is already borrowed and not returned
-    active_borrowings = borrowing_crud.get_book_borrowings(db, book_id=borrowing.book_id)
+    active_borrowings = borrowing_crud.get_user_book_borrowings(db, book_id=borrowing.book_id, user_id=borrowing.user_id)
     for active_borrowing in active_borrowings:
         if not active_borrowing.is_returned:
             raise HTTPException(
