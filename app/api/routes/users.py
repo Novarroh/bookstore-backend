@@ -11,6 +11,18 @@ router = APIRouter()
 
 @router.post("/register", response_model=User)
 def register(user: UserCreate, db: Session = Depends(get_db)):
+    """
+    Register a new user
+
+    Args:
+        user (UserCreate): User details
+
+    Raises:
+        HTTPException: 400 Bad Request if email is already registered or password is too short
+
+    Returns:
+        User: Newly created user
+    """
     db_user = user_crud.get_user_by_email(db, email=user.email)
     if db_user:
         raise HTTPException(
@@ -26,6 +38,18 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=User)
 def login(login_data: LoginRequest, db: Session = Depends(get_db)):
+    """
+    Login for an existing user
+
+    Args:
+        login_data (LoginRequest): email and password
+
+    Raises:
+        HTTPException: 401 Unauthorized if email or password is incorrect
+
+    Returns:
+        User: User details
+    """
     user = user_crud.authenticate_user(db, email=login_data.email, password=login_data.password)
     if not user:
         raise HTTPException(
@@ -36,11 +60,35 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=List[User])
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """
+    Retrieve all users
+
+    Args:
+        skip (int, optional): Number of records to skip. Defaults to 0.
+        limit (int, optional): Number of records to return. Defaults to 100.
+
+    Returns:
+        List[User]: List of users
+    """
     users = user_crud.get_users(db, skip=skip, limit=limit)
     return users
 
 @router.put("/{user_id}/role", response_model=User)
 def update_user_role(user_id: int, role_update: RoleUpdate, db: Session = Depends(get_db)):
+    """
+    Update the role of a user
+
+    Args:
+        user_id (int): id of the user to update
+        role_update (RoleUpdate): new role and id of the admin who made the update
+
+    Raises:
+        HTTPException: 403 Forbidden if the admin is not an admin
+        HTTPException: 404 Not Found if the user is not found
+
+    Returns:
+        User: Updated user
+    """
     admin_id = role_update.admin_id
     admin = user_crud.get_user(db, user_id=admin_id)
     if admin is None or admin.role != UserRole.ADMIN:

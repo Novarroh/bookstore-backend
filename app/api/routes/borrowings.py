@@ -11,10 +11,23 @@ router = APIRouter()
 @router.post("/")
 def create_book_borrowing(borrowing: BookBorrowingCreate, db: Session = Depends(get_db)):
     """
-    Create a new book borrowing record.
-    Only admin and librarian users can create borrowing records.
+    Create a new borrowing record
+    
+    Args:
+        borrowing (BookBorrowingCreate): The borrowing record to be created
+        db (Session, optional): The database session dependency. Defaults to Depends(get_db).
+    
+    Raises:
+        HTTPException: 404 Not Found if the current user is not found
+        HTTPException: 403 Forbidden if the current user is not an admin or librarian
+        HTTPException: 404 Not Found if the book is not found
+        HTTPException: 400 Bad Request if the book is not available for borrowing (quantity is 0)
+        HTTPException: 404 Not Found if the user is not found
+        HTTPException: 400 Bad Request if the book is already borrowed and not yet returned
+    
+    Returns:
+        dict: A message indicating the successful creation of the borrowing record
     """
-    # Get the current user from the database
     current_user = user_crud.get_user(db, user_id=borrowing.current_user_id)
     if not current_user:
         raise HTTPException(
@@ -74,7 +87,18 @@ def create_book_borrowing(borrowing: BookBorrowingCreate, db: Session = Depends(
 @router.get("/user/{user_id}", response_model=List[BookBorrowingDetail])
 def read_user_borrowings(user_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """
-    Retrieve borrowings for a specific user.
+    Retrieve all borrowing records for a given user
+
+    Args:
+        user_id (int): User id
+        skip (int, optional): Number of records to skip. Defaults to 0.
+        limit (int, optional): Number of records to return. Defaults to 100.
+
+    Raises:
+        HTTPException: 404 Not Found if the user is not found
+
+    Returns:
+        List[BookBorrowingDetail]: List of borrowing records
     """
     user = user_crud.get_user(db, user_id=user_id)
     if not user:
@@ -89,7 +113,21 @@ def read_user_borrowings(user_id: int, skip: int = 0, limit: int = 100, db: Sess
 def return_borrowed_book(borrowing_id: int, db: Session = Depends(get_db)):
     """
     Mark a borrowed book as returned.
+
+    This endpoint updates the borrowing record to indicate that the book has been returned.
+    It also increases the available quantity of the book by one.
+
+    Args:
+        borrowing_id (int): The ID of the borrowing record to be marked as returned.
+        db (Session, optional): The database session dependency.
+
+    Raises:
+        HTTPException: If the borrowing record is not found, a 404 Not Found error is raised.
+
+    Returns:
+        dict: A message indicating the successful return of the book.
     """
+
     db_borrowing = borrowing_crud.return_book(db, borrowing_id=borrowing_id)
     if db_borrowing is None:
         raise HTTPException(
